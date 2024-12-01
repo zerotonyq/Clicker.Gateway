@@ -10,11 +10,14 @@
         }
       ],
       "UpstreamPathTemplate": "/Auth/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST"
+      ],
       "SwaggerKey": "ClickerAuth"
     },
     {
-      "DownstreamPathTemplate": "/api/Clicker/{everything}",
+      "DownstreamPathTemplate": "/api/users/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -22,14 +25,45 @@
           "Port": 5265
         }
       ],
-      "UpstreamPathTemplate": "/Clicker/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "UpstreamPathTemplate": "/users/{everything}",
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST"
+      ],
       "SwaggerKey": "Clicker",
       "AuthenticationOptions": {
-        "AuthenticationProviderKeys": [ "Bearer" ]
+        "AuthenticationProviderKeys": [
+          "Bearer"
+        ]
+      },
+      "RouteClaimsRequirement": {
+        "Role": "superuser,user,admin"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5265
+        }
+      ],
+      "UpstreamPathTemplate": "/admin/{everything}",
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST"
+      ],
+      "SwaggerKey": "AdminApi",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [
+          "Bearer"
+        ]
+      },
+      "RouteClaimsRequirement": {
+        "Role": "superuser,admin"
       }
     }
-  
   ],
   "SwaggerEndPoints": [
     {
@@ -42,6 +76,14 @@
     },
     {
       "Key": "Clicker",
+      "Config": [
+        {
+          "Url": "http://localhost:5265/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "AdminApi",
       "Config": [
         {
           "Url": "http://localhost:5265/swagger/v1/swagger.json"

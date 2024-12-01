@@ -1,13 +1,13 @@
-using System.Text;
 using ClickerGateway;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Ocelot.Authorization;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем ocelot.json для маршрутизации
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddAuthentication(opt =>
@@ -24,7 +24,7 @@ builder.Services.AddAuthentication(opt =>
             ValidateAudience = false,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey("bobikBobinski228pukpuk0070000000!!!"u8.ToArray()),
-            ClockSkew = TimeSpan.Zero,
+            ClockSkew = TimeSpan.Zero
         };
     });
 builder.Services.AddOcelot();
@@ -33,15 +33,18 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSingleton<ApiClassGenerator>();
 
+
 var app = builder.Build();
 
 var myClass = app.Services.GetRequiredService<ApiClassGenerator>();
+
 app.Lifetime.ApplicationStarted.Register(async () =>
 {
     await myClass.GenerateApiClass(new List<string>()
     {
         "http://localhost:5000/swagger/docs//ClickerAuth",
-        "http://localhost:5000/swagger/docs//Clicker"
+        "http://localhost:5000/swagger/docs//Clicker",
+        "http://localhost:5000/swagger/docs//AdminApi"
     });
 });
 
@@ -51,12 +54,35 @@ app.UseSwaggerForOcelotUI(options =>
     options.PathToSwaggerGenerator = "/swagger/docs"; // Убедитесь, что путь совпадает с основным API
 });
 
-// Перенаправление HTTP на HTTPS
+
 app.UseHttpsRedirection();
 
-// Инициализация Ocelot middleware, которую нужно обязательно подождать
-await app.UseOcelot();
 
-// Запуск приложения
+await app.UseOcelot( new OcelotPipelineConfiguration(){AuthorizationMiddleware = async (ctx, next) =>
+{
+    if (!ctx.Items.DownstreamRoute().RouteClaimsRequirement.TryGetValue("Role", out var requiredRoleString))
+    {
+        await next.Invoke();
+        return;
+    }
+
+    Console.WriteLine(ctx.Items.DownstreamRoute().RouteClaimsRequirement["Role"]);
+    Console.WriteLine(ctx.User.Claims.First(c => c.Type == "Role").Value);
+    
+    var roles = ctx.Items.DownstreamRoute().RouteClaimsRequirement["Role"].Split(',');
+    var userRoles = ctx.User.Claims.First(c => c.Type == "Role").Value.Split(',');
+
+
+    if (userRoles.Any(role => roles.Contains(role)))
+    {
+        await next.Invoke();
+    }
+    else
+    {
+        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await ctx.Response.WriteAsync("Access denied: insufficient roles.");
+    }
+    
+}});
+
 app.Run();
-
