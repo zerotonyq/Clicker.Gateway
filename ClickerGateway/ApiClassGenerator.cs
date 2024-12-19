@@ -7,7 +7,7 @@ public class ApiClassGenerator
     public async Task GenerateApiClass(List<string> swaggerUrls)
     {
          // URL для swagger.json
-        string outputPath = "C:\\UnityProjects\\UniversityClickerClient\\Assets\\Scripts\\ApiPaths.cs"; // Файл для сгенерированного класса
+        string outputPath = "C:\\Clicker\\ClickerClient\\Assets\\Scripts\\ApiPaths.cs"; // Файл для сгенерированного класса
 
         string baseUrl = "http://localhost:5000";
         
